@@ -1,0 +1,93 @@
+version: "3.7"
+services:
+  #PHP Service
+  laravel_admin_panel:
+    build:
+      args:
+        user: zamshedarifin
+        uid: 1000
+      context: .
+      dockerfile: .docker/Dockerfile
+    image: laravel_admin_panel
+    restart: unless-stopped
+    working_dir: /var/www/
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    volumes:
+      - ./:/var/www
+      - ./.docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - laravel_admin_panel_network
+
+  #MySQL Service
+  laravel_admin_panel_db:
+    image: mysql:8.0
+    container_name: laravel_admin_panel_db
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_DB_PORT}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - laravel_admin_panel_mysql_data:/var/lib/mysql
+    networks:
+      - laravel_admin_panel_network
+
+  #Nginx Service
+  laravel_admin_panel_nginx:
+    image: nginx:alpine
+    container_name: laravel_admin_panel_nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${DOCKER_APP_PORT}:80"
+      - "${DOCKER_APP_SSL_PORT}:443"
+    volumes:
+      - ./:/var/www
+      - ./.docker/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - laravel_admin_panel_network
+  # phpmyadmin service
+  laravel_admin_panel_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    container_name: laravel_admin_panel_phpmyadmin
+    depends_on:
+      - laravel_admin_panel_db
+    ports:
+      - "${DOCKER_PHPMYADMIN_PORT}:80"
+    environment:
+      PMA_HOST: laravel_admin_panel_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_LIMIT: 100M
+    networks:
+      - laravel_admin_panel_network
+
+  laravel_admin_panel_redis_cache:
+    image: redis:alpine
+    restart: always
+    container_name: laravel_admin_panel_redis_cache
+    ports:
+      - '${DOCKER_REDIS_PORT}:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - laravel_admin_panel_cache:/data
+    networks:
+      - laravel_admin_panel_network
+
+#Docker Networks
+networks:
+  laravel_admin_panel_network:
+    driver: bridge
+
+#Volumes
+volumes:
+  laravel_admin_panel_mysql_data:
+  laravel_admin_panel_cache:
