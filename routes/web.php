@@ -1,15 +1,32 @@
 <?php
 
-use App\Http\Controllers\FrontEndController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\frontend\FrontEndController;
+use App\Http\Controllers\frontend\ProfileController;
 
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\backend\Admin\AdminDashboardController;
+use App\Http\Controllers\backend\Auth\LoginController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/',[FrontEndController::class,'index'])->name('homepage');
-Route::get('/profile',[ProfileController::class,'index'])->name('profile');
+Route::middleware('vlogger.guest')->group(function () {
+    Route::get('/', [\App\Http\Controllers\frontend\Auth\LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/', [\App\Http\Controllers\frontend\Auth\LoginController::class, 'login']);
+    Route::get('/register', [\App\Http\Controllers\frontend\Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [\App\Http\Controllers\frontend\Auth\RegisterController::class, 'register'])->name('register');
+});
+
+Route::middleware('vlogger')->group(function () {
+    Route::get('/home',[FrontEndController::class,'index'])->name('homepage');
+    Route::get('/profile',[ProfileController::class,'index'])->name('profile');
+    Route::get('/suggested-users', [\App\Http\Controllers\frontend\FollowController::class, 'suggested']);
+    Route::post('/follow/{id}', [\App\Http\Controllers\frontend\FollowController::class, 'follow']);
+    Route::post('/unfollow/{id}', [\App\Http\Controllers\frontend\FollowController::class, 'unfollow']);
+    Route::post('/posts', [\App\Http\Controllers\frontend\PostController::class, 'storePost']);
+    Route::get('/followings/posts', [\App\Http\Controllers\frontend\PostController::class, 'postsFromFollowings']);
+
+    Route::get('/logout',[\App\Http\Controllers\frontend\Auth\LoginController::class,'logout'])->name('logout');
+});
+
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
 

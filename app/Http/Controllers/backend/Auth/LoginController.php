@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\backend\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -22,7 +22,7 @@ class LoginController extends Controller
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        return view('backend.auth.login');
     }
     public function login(Request $request)
     {

@@ -92,5 +92,6 @@
 <!-- Ion icon -->
 <script type="module" src="../../unpkg.com/ionicons%405.5.2/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="../../unpkg.com/ionicons%405.5.2/dist/ionicons/ionicons.js"></script>
+@yield('js')
 </body>
 </html>

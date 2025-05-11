@@ -34,13 +34,13 @@
 <body>
 
 <!-- ======= Header ======= -->
-@include('partials.header')
-@include('partials.side-nav')
+@include('backend.partials.header')
+@include('backend.partials.side-nav')
 
 <main id="main" class="main">
   @yield('content')
 </main><!-- End #main -->
-@include('partials.footer')
+@include('backend.partials.footer')
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
 <!-- Vendor JS Files -->
