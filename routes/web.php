@@ -21,7 +21,8 @@ Route::middleware('vlogger')->group(function () {
     Route::get('/suggested-users', [\App\Http\Controllers\frontend\FollowController::class, 'suggested']);
     Route::post('/follow/{id}', [\App\Http\Controllers\frontend\FollowController::class, 'follow']);
     Route::post('/unfollow/{id}', [\App\Http\Controllers\frontend\FollowController::class, 'unfollow']);
-    Route::post('/posts', [\App\Http\Controllers\frontend\PostController::class, 'storePost']);
+    Route::get('/my-following', [\App\Http\Controllers\frontend\FollowController::class, 'myFollowing']);;
+    Route::post('/posts', [\App\Http\Controllers\frontend\PostController::class, 'store']);
     Route::get('/followings/posts', [\App\Http\Controllers\frontend\PostController::class, 'postsFromFollowings']);
 
     Route::get('/logout',[\App\Http\Controllers\frontend\Auth\LoginController::class,'logout'])->name('logout');

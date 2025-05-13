@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class Vlogger extends Authenticatable
 {
+    use Notifiable;
     protected $table ="vloggers";
     protected $guarded =[];
 
@@ -32,5 +34,10 @@ class Vlogger extends Authenticatable
     public function posts()
     {
         return $this->hasMany(Post::class);
+    }
+
+    public function taggedPosts()
+    {
+        return $this->hasMany(TaggedUser::class, 'user_id');
     }
 }

@@ -41,4 +41,17 @@ class FollowController extends Controller
 
         return response()->json($suggested);
     }
+
+    public function myFollowing()
+    {
+        $authUser = auth('vlogger')->user();
+
+        // Get the full list of followed users with selected fields
+        $followings = $authUser->followings()
+            ->select('vloggers.id', 'vloggers.name', 'vloggers.profile_picture')
+            ->get();
+
+        return response()->json($followings);
+    }
+
 }

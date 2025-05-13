@@ -14,4 +14,9 @@ class Post extends Model
     {
         return $this->belongsTo(Vlogger::class);
     }
+
+    public function taggedUsers()
+    {
+        return $this->hasMany(TaggedUser::class);
+    }
 }

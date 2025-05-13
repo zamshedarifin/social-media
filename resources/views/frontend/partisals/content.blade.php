@@ -20,6 +20,19 @@
                             <textarea v-model="caption" id="caption" placeholder="Enter your caption" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                         </div>
 
+                        <div class="space-y-2">
+                            <label for="taggedUsers" class="block text-lg font-semibold">Tag Users</label>
+                            <select id="taggedUsers"
+                                    v-model="taggedUsers"
+                                    multiple
+                                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option v-for="user in followList" :key="user.id" :value="user.id">
+                                    {{ user.name }}
+                                </option>
+                            </select>
+                            <p class="text-sm text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple users.</p>
+                        </div>
+
                         <!-- File Inputs for Photo, Video, and Reel -->
                         <div class="flex space-x-4">
                             <label :class="{'cursor-pointer bg-gray-100': !isPhotoSelected}" class="flex flex-col items-center justify-center w-1/4 p-2 rounded-lg border border-blue-500 text-blue-600 hover:bg-blue-200">
@@ -51,6 +64,10 @@
                             </div>
                         </div>
 
+                        <div v-if="uploading" class="w-full bg-gray-200 h-2 mb-4">
+                            <div :style="{ width: uploadProgress + '%' }" class="bg-blue-600 h-full"></div>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="flex justify-between items-center mt-4">
                             <button @click="clearAll" type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg shadow-sm text-sm font-medium">Clear All</button>
@@ -76,6 +93,11 @@
                         </div>
                     </div>
 
+                    <!-- Post Caption -->
+                    <div class="px-4 py-2 text-gray-700 dark:text-white/80" v-if="post.caption">
+                        {{ post.caption }}
+                    </div>
+
                     <!-- Post Content -->
                     <div class="relative w-full lg:h-72 h-full sm:px-4">
                         <img v-if="post.content_type === 'photo'" :src="'/storage/' + post.content_file" @error="$event.target.src = '/storage/noimage.jpg'" class="sm:rounded-lg w-full h-full object-cover" />
@@ -87,10 +109,6 @@
                         </video>
                     </div>
 
-                    <!-- Post Caption -->
-                    <div class="px-4 py-2 text-gray-700 dark:text-white/80" v-if="post.caption">
-                        {{ post.caption }}
-                    </div>
 
                     <!-- Post Footer (like, comment...) -->
                     <div class="sm:p-4 p-2.5 flex items-center gap-4 text-xs font-semibold">
@@ -225,6 +243,8 @@
 @section('js')
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo/dist/echo.iife.js"></script>
     <script>
         const { createApp } = Vue;
 
@@ -233,6 +253,8 @@
                 return {
                     suggestedUsers: [] ,
                     followingPosts: [],
+                    followList: [],
+                    taggedUsers: [],
                     caption: "",
                     photo: null,
                     video: null,
@@ -243,6 +265,8 @@
                     isPhotoSelected: false,
                     isVideoSelected: false,
                     isReelSelected: false,
+                    uploading: false,
+                    uploadProgress: 0,
                 }
             },
             methods: {
@@ -287,6 +311,15 @@
                         console.log('Posts from followed users:', response.data);
                     } catch (error) {
                         console.error('Error fetching following posts:', error);
+                    }
+                },
+
+                async fetchFollowList() {
+                    try {
+                        const response = await axios.get('/my-following');
+                        this.followList = response.data; // Array of users
+                    } catch (error) {
+                        console.error('Error fetching follow list:', error);
                     }
                 },
 
@@ -359,22 +392,61 @@
                         formData.append('content_type', 'reel');
                         formData.append('content_file', this.reel);
                     }
-                    axios.post('/posts', formData)
+
+                    // Show progress bar
+                    this.uploading = true;
+                    this.uploadProgress = 0;
+
+                    // Append tagged user IDs
+                    this.taggedUsers.forEach(userId => {
+                        formData.append('tagged_users[]', userId);
+                    });
+
+                    axios.post('/posts', formData, {
+                        onUploadProgress: (progressEvent) => {
+                            if (progressEvent.total) {
+                                this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                            }
+                        }
+                    })
                         .then(response => {
                             alert('Post created successfully!');
                             this.clearAll(); // Reset the form
+                            this.taggedUsers = [];
+                            this.uploading = false;  // Hide the progress bar
                         })
                         .catch(error => {
                             alert('An error occurred while creating the post.');
                             console.error(error);
+                            this.uploading = false;  // Hide the progress bar
                         });
                 }
             },
             mounted() {
                 this.fetchSuggestedUsers();
                 this.fetchFollowingPosts();
+                this.fetchFollowList();
+
+                Echo.private(`vlogger.${this.userId}`)
+                    .notification((notification) => {
+                        console.log("🔔 New notification received:", notification);
+                        // You can show a toast or update a badge counter here
+                    });
+
             }
         }).mount('#app');
     </script>
+
+    <script>
+        window.Pusher = Pusher;
+
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: '{{ env('PUSHER_APP_KEY') }}',
+            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+            forceTLS: true
+        });
+    </script>
+
 
 @endsection
