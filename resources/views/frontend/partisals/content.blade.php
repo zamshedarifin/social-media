@@ -18,16 +18,16 @@
                         <label for="caption" class="block text-lg text-black font-semibold">Caption</label>
 
                         <!-- Tagged user summary -->
-                        <span v-if="taggedUsers.length > 0" class="text-black">
-  is with
-  <template v-for="(taguser, index) in taggedUsers" :key="taguser.id">
-    <span class="text-black font-medium">
-      {{ taguser.name }}
-      <span v-if="index < taggedUsers.length - 2">, </span>
-      <span v-else-if="index === taggedUsers.length - 2"> and </span>
-    </span>
-  </template>
-</span>
+                             <span v-if="taggedUsers.length > 0" class="text-black">
+                              is with
+                              <template v-for="(taguser, index) in taggedUsers" :key="taguser.id">
+                                <span class="text-black font-medium">
+                                  {{ taguser.name }}
+                                  <span v-if="index < taggedUsers.length - 2">, </span>
+                                  <span v-else-if="index === taggedUsers.length - 2"> and </span>
+                                </span>
+                              </template>
+                            </span>
 
                         <textarea
                             v-model="caption"
@@ -182,7 +182,6 @@
                     </div>
                 </div>
 
-
                 <!--- POST Area--->
                 <div
                     v-for="post in followingPosts"
@@ -200,10 +199,10 @@
                             <div
                                 class="text-xs text-gray-500 dark:text-white/80"
                             >{{ new Date(post.created_at).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }) }}</div>
+                                  day: "2-digit",
+                                  month: "long",
+                                  year: "numeric",
+                                }) }}</div>
                         </div>
                     </div>
 
@@ -213,12 +212,7 @@
                     </div>
 
                     <!-- Media Grid -->
-                    <div
-                        :class="[
-        'grid gap-4',
-        post.media.every((item) => item.media_type === 'photo') ? 'grid-cols-3' : '',
-      ]"
-                    >
+                    <div :class="['grid gap-4',post.media.every((item) => item.media_type === 'photo') ? 'grid-cols-3' : '',]" >
                         <div v-for="mediaItem in post.media" :key="mediaItem.id" class="overflow-hidden rounded-md">
                             <img
                                 v-if="mediaItem.media_type === 'photo'"
@@ -281,11 +275,11 @@
                         <button
                             @click="toggleComments(post.id)"
                             :class="[
-          'ml-auto font-semibold transition-colors duration-200 px-3 py-1 rounded',
-          openComments[post.id]
-            ? 'bg-blue-600 text-white dark:bg-blue-500'
-            : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500',
-        ]"
+                                  'ml-auto font-semibold transition-colors duration-200 px-3 py-1 rounded',
+                                  openComments[post.id]
+                                    ? 'bg-blue-600 text-white dark:bg-blue-500'
+                                    : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500',
+                                ]"
                         >
                             Comments
                         </button>
@@ -294,12 +288,11 @@
                         <button
                             @click="toggleGifts(post.id)"
                             :class="[
-          'font-semibold transition-colors duration-200 px-3 py-1 rounded',
-          openGifts[post.id]
-            ? 'bg-pink-600 text-white dark:bg-pink-500'
-            : 'text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-500',
-        ]"
-                        >
+                                  'font-semibold transition-colors duration-200 px-3 py-1 rounded',
+                                  openGifts[post.id]
+                                    ? 'bg-pink-600 text-white dark:bg-pink-500'
+                                    : 'text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-500',
+                                ]"  >
                             Send Gift
                         </button>
                     </div>
@@ -309,30 +302,30 @@
                     <!-- Comments Box -->
                     <div v-if="openComments[post.id]" class="px-4 py-3 space-y-6 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
                         <!-- Single Comment (Static Example) -->
-                        <div class="flex gap-3">
+                        <div class="flex gap-3" v-for="postComment in post.comments" :key="postComment.id">
+
                             <img
                                 :src="'/storage/noimage.jpg'"
                                 alt="User Avatar"
                                 class="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
                             />
                             <div class="flex-1">
-                                <div
-                                    class="font-semibold text-sm text-gray-900 dark:text-white"
-                                >
-                                    usr
+                                <div class="font-semibold text-sm text-gray-900 dark:text-white">
+                                    {{ postComment.vlogger?.name }}
                                 </div>
-                                <div
-                                    class="text-sm text-gray-700 dark:text-gray-300 mt-0.5"
-                                >
-                                    Khub valo hoice
+                                <div class="text-sm text-gray-700 dark:text-gray-300 mt-0.5">
+                                    {{ postComment.comment }}
                                 </div>
-                                <div
-                                    class="text-xs text-gray-400 dark:text-gray-500 mt-1"
-                                >
-                                    12 May 2025
+                                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                    {{ new Date(postComment?.created_at).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric'
+                                      }) }}
                                 </div>
                             </div>
                         </div>
+
 
                         <!-- Add Comment Input -->
                         <div>
@@ -665,11 +658,22 @@
                         this.openComments = { ...this.openComments, [postId]: false };
                     }
                 },
-                postComment(postId) {
+                async postComment(postId) {
                     const comment = this.newComment[postId];
                     if (!comment || comment.trim() === '') return;
-                    alert(`Comment on post ${postId}: ${comment}`);
-                    this.newComment = { ...this.newComment, [postId]: '' };
+
+                    try {
+                        const response = await axios.post(`/posts/${postId}/comments`, {
+                            comment: comment.trim(),
+                        });
+                        // Optionally push to local comments list or refetch
+                        if (!this.comments[postId]) this.$set(this.comments, postId, []);
+                        this.comments[postId].push(response.data.comment);
+                        this.newComment = { ...this.newComment, [postId]: '' };
+                    } catch (error) {
+                        console.error('Failed to post comment:', error);
+                        alert('Failed to post comment. Please try again.');
+                    }
                 },
                 sendGifts(postId, value) {
                     this.flowerRatings = { ...this.flowerRatings, [postId]: value };

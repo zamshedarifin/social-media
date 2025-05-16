@@ -16,6 +16,7 @@ Route::middleware('vlogger.guest')->group(function () {
 });
 
 Route::middleware('vlogger')->group(function () {
+    Route::get('/logout',[\App\Http\Controllers\frontend\Auth\LoginController::class,'logout'])->name('logout');
     Route::get('/home',[FrontEndController::class,'index'])->name('homepage');
     Route::get('/profile',[ProfileController::class,'index'])->name('profile');
     Route::get('/suggested-users', [\App\Http\Controllers\frontend\FollowController::class, 'suggested']);
@@ -26,7 +27,9 @@ Route::middleware('vlogger')->group(function () {
     Route::get('/followings/posts', [\App\Http\Controllers\frontend\PostController::class, 'postsFromFollowings']);
     Route::get('/notifications', [\App\Http\Controllers\frontend\PostController::class, 'notifications']);
     Route::post('/tags/{postId}/approve', [\App\Http\Controllers\frontend\PostController::class, 'approveTag']);
-    Route::get('/logout',[\App\Http\Controllers\frontend\Auth\LoginController::class,'logout'])->name('logout');
+
+    Route::post('/posts/{post}/comments', [\App\Http\Controllers\frontend\PostInteractionController::class, 'addComment']);
+    Route::post('/posts/{post}/gifts', [\App\Http\Controllers\frontend\PostInteractionController::class, 'sendGift']);
 });
 
 

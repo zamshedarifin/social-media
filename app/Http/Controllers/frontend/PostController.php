@@ -96,7 +96,7 @@ class PostController extends Controller
         $followingIds = $authUser->followings()->pluck('vloggers.id');
 
         // Get posts with their author and media files
-        $posts = Post::with(['vlogger', 'media'])
+        $posts = Post::with(['vlogger', 'media','comments','comments.vlogger'])
             ->whereIn('vlogger_id', $followingIds)
             ->latest()
             ->get();
