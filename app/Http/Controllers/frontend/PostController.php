@@ -4,6 +4,7 @@ namespace App\Http\Controllers\frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Models\PostMedia;
 use App\Models\TaggedUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -13,42 +14,48 @@ use Illuminate\Support\Facades\Notification;
 
 class PostController extends Controller
 {
+
     public function store(Request $request)
     {
         $request->validate([
             'caption' => 'required|string|max:255',
             'content_type' => 'required|in:photo,video,reel',
-            'content_file' => 'required|file|mimes:jpeg,png,jpg,mp4,mkv,mp3',
-            'tagged_users' => 'required|array', // Array of user IDs to be tagged
-            'tagged_users.*' => 'exists:vloggers,id', // Ensure tagged users exist
+            'content_files' => 'required|array',
+            'content_files.*' => 'file|mimes:jpeg,png,jpg,mp4,mkv,mp3',
         ]);
 
         $authUser = auth('vlogger')->user();
 
-        // Store file in public disk under "vlogs" directory
-        $path = $request->file('content_file')->store('vlogs', 'public');
-
-        // Create the post
+        // Create the post (without content_file, since multiple files)
         $post = Post::create([
-            'vlogger_id'   => $authUser->id,
+            'vlogger_id' => $authUser->id,
             'content_type' => $request->content_type,
-            'content_file' => $path,
-            'caption'      =>$request->caption,
+            'caption' => $request->caption,
         ]);
 
-        // Tag users
-        foreach ($request->tagged_users as $userId) {
-            TaggedUser::create([
+        // Loop through each uploaded file and store
+        foreach ($request->file('content_files') as $file) {
+            $path = $file->store('vlogs', 'public');
+
+            // Save each media file in PostMedia (you need to create this model & migration)
+            PostMedia::create([
                 'post_id' => $post->id,
-                'user_id' => $userId,
-                'approved' => false, // Initially not approved
+                'file_path' => $path,
+                'media_type' => $request->content_type,
             ]);
         }
 
-        // Send notifications to tagged users using Pusher
-        $taggedUsers = Vlogger::whereIn('id', $request->tagged_users)->get();
-        foreach ($taggedUsers as $user) {
-            $user->notify(new TaggedInPostNotification($post));
+        if(isset($request->tagged_users))
+        {
+            foreach ($request->tagged_users as $userId) {
+                TaggedUser::create([
+                    'post_id' => $post->id,
+                    'user_id' => $userId,
+                    'approved' => false,
+                ]);
+                $taggedUser = Vlogger::find($userId);
+                $taggedUser->notify(new TaggedInPostNotification($post, $authUser));
+            }
         }
 
         return response()->json([
@@ -56,21 +63,31 @@ class PostController extends Controller
         ], 200);
     }
 
-    // Push notification logic
-    private function sendPushNotification($userId, $post)
+    // Fetch notifications for authenticated user
+    public function notifications()
     {
-        $user = Vlogger::find($userId);
-        if ($user) {
-            // Send the notification (you may integrate a package like Pusher or Firebase)
-            // For simplicity, we'll just simulate sending a notification
-            $message = "You were tagged in a post: {$post->caption}";
+        $user = auth('vlogger')->user();
+        $notifications = $user->notifications()->latest()->get();
 
-            // This could be a push notification, email, etc.
-            // Example: $user->notify(new TaggedInPostNotification($message));
-        }
+        return response()->json($notifications);
     }
 
+    // Approve or reject tag
+    public function approveTag(Request $request, $postId)
+    {
+        $tagged = TaggedUser::where('post_id', $postId)
+            ->where('user_id', auth('vlogger')->id())
+            ->firstOrFail();
 
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+        ]);
+
+        $tagged->status = $request->status;
+        $tagged->save();
+
+        return response()->json(['message' => 'Tag status updated']);
+    }
 
     public function postsFromFollowings()
     {
@@ -78,8 +95,9 @@ class PostController extends Controller
 
         $followingIds = $authUser->followings()->pluck('vloggers.id');
 
-        $posts = Post::with('vlogger') // eager load author info
-        ->whereIn('vlogger_id', $followingIds)
+        // Get posts with their author and media files
+        $posts = Post::with(['vlogger', 'media'])
+            ->whereIn('vlogger_id', $followingIds)
             ->latest()
             ->get();
 

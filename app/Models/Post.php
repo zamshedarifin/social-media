@@ -19,4 +19,9 @@ class Post extends Model
     {
         return $this->hasMany(TaggedUser::class);
     }
+
+    public function media()
+    {
+        return $this->hasMany(PostMedia::class);
+    }
 }

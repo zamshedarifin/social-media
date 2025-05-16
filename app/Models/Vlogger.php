@@ -38,6 +38,7 @@ class Vlogger extends Authenticatable
 
     public function taggedPosts()
     {
-        return $this->hasMany(TaggedUser::class, 'user_id');
+        return $this->belongsToMany(Post::class, 'tagged_users', 'user_id', 'post_id')
+            ->withPivot('status');
     }
 }

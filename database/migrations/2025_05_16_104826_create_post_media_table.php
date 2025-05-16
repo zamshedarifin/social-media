@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('post_media', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vlogger_id')->constrained('vloggers')->onDelete('cascade');
-            $table->enum('content_type', ['photo', 'video', 'reel']);
-            $table->text('caption')->nullable();
+            $table->foreignId('post_id')->constrained()->onDelete('cascade');
+            $table->string('file_path');
+            $table->string('media_type'); // photo, video, reel etc.
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('post_media');
     }
 };

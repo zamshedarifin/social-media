@@ -1,48 +1,37 @@
 <?php
-
+// app/Notifications/TaggedInPostNotification.php
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Notifications\Messages\DatabaseMessage;
+use App\Models\Post;
+use App\Models\Vlogger;
 
-class TaggedInPostNotification extends Notification implements ShouldBroadcast
+class TaggedInPostNotification extends Notification
 {
     use Queueable;
 
     protected $post;
+    protected $tagger;
 
-    public function __construct($post)
+    public function __construct(Post $post, Vlogger $tagger)
     {
         $this->post = $post;
+        $this->tagger = $tagger;
     }
 
     public function via($notifiable)
     {
-        return ['database', 'broadcast'];
+        return ['database'];
     }
 
     public function toDatabase($notifiable)
     {
         return [
-            'message' => 'You were tagged in a post.',
+            'message' => "{$this->tagger->name} tagged you in a post.",
             'post_id' => $this->post->id,
+            'tagger_id' => $this->tagger->id,
         ];
-    }
-
-    public function toBroadcast($notifiable)
-    {
-        return [
-            'data' => [
-                'message' => 'You were tagged in a post.',
-                'post_id' => $this->post->id,
-            ]
-        ];
-    }
-
-    public function broadcastOn()
-    {
-        return new PrivateChannel('vlogger.' . $this->post->user_id);
     }
 }

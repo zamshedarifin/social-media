@@ -25,6 +25,8 @@
     <link href="{{asset('backend/vendor/quill/quill.bubble.css')}}" rel="stylesheet">
     <link href="{{asset('backend/vendor/remixicon/remixicon.css')}}" rel="stylesheet">
     <link href="{{asset('backend/vendor/simple-datatables/style.css')}}" rel="stylesheet">
+    <!-- Add this in your main blade file if not already included -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- Template Main CSS File -->
     <link href="{{asset('backend/css/style.css')}}" rel="stylesheet">

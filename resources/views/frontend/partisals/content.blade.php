@@ -12,84 +12,198 @@
             <!-- feed story -->
             <div class="md:max-w-[510px] mx-auto flex-1 xl:space-y-6 space-y-3">
                 <!-- Upload & Actions Section -->
-                <div class="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg">
-                    <div class="space-y-6">
-                        <!-- Caption Input -->
-                        <div class="space-y-2">
-                            <label for="caption" class="block text-lg font-semibold">Caption</label>
-                            <textarea v-model="caption" id="caption" placeholder="Enter your caption" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                <div class="max-w-xl mx-auto p-6 bg-[#242526] text-white rounded-lg shadow-lg space-y-6 text-black">
+                    <!-- Caption -->
+                    <div class="space-y-2">
+                        <label for="caption" class="block text-lg text-black font-semibold">Caption</label>
+
+                        <!-- Tagged user summary -->
+                        <span v-if="taggedUsers.length > 0" class="text-black">
+  is with
+  <template v-for="(taguser, index) in taggedUsers" :key="taguser.id">
+    <span class="text-black font-medium">
+      {{ taguser.name }}
+      <span v-if="index < taggedUsers.length - 2">, </span>
+      <span v-else-if="index === taggedUsers.length - 2"> and </span>
+    </span>
+  </template>
+</span>
+
+                        <textarea
+                            v-model="caption"
+                            id="caption"
+                            placeholder="What's on your mind?"
+                            class="w-full p-3 bg-[#3A3B3C] border border-gray-700 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                        ></textarea>
+                    </div>
+
+                    <!-- Buttons like Facebook -->
+                    <div class="grid grid-cols-3 sm:grid-cols-3 gap-3 text-black">
+                        <!-- Photo/Video -->  <label  v-if="auth == 1 || auth == 2 || auth == 3"
+                            :class="['flex items-center space-x-3 bg-[#3A3B3C] hover:bg-[#4E4F50] p-3 rounded-lg cursor-pointer transition-all', photoPreviews.length ? 'ring-2 ring-blue-500' : '']"
+                        >
+                            <i class="fas fa-photo-video text-xs" style="color: #45BD62;"></i> &nbsp;
+                            <span class="text-sm">Photo</span>
+                            <input
+                                type="file"
+                                ref="photo"
+                                accept="image/*"
+                                multiple
+                                @change="handleFileChange('photo')"
+                                class="hidden"
+                            />
+                        </label>
+                        <!-- Tag People -->
+                        <div class="relative">
+                            <button
+                                @click="showTagDropdown = !showTagDropdown"
+                                class="flex items-center w-full space-x-3 bg-[#3A3B3C] hover:bg-[#4E4F50] p-3 rounded-lg cursor-pointer transition-all"
+                            >
+                                <i class="fas fa-user-tag text-xs text-blue-400"></i>
+                                <span class="text-sm">Tag people</span>
+                            </button>
+                            <!-- Dropdown -->
+
                         </div>
 
-                        <div class="space-y-2">
-                            <label for="taggedUsers" class="block text-lg font-semibold">Tag Users</label>
-                            <select id="taggedUsers"
-                                    v-model="taggedUsers"
-                                    multiple
-                                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option v-for="user in followList" :key="user.id" :value="user.id">
-                                    {{ user.name }}
-                                </option>
-                            </select>
-                            <p class="text-sm text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple users.</p>
+                        <label  v-if="auth == 3"
+                            :class="['flex items-center space-x-3 bg-[#3A3B3C] hover:bg-[#4E4F50] p-3 rounded-lg cursor-pointer transition-all', isVideoSelected ? 'ring-2 ring-red-500' : '']"
+                        >
+                            <i class="fas fa-video text-xs" style="color: #F02849;"></i> &nbsp;
+                            <span class="text-sm">Video</span>
+                            <input
+                                type="file"
+                                ref="video"
+                                accept="video/*"
+                                @change="handleFileChange('video')"
+                                class="hidden"
+                            />
+                        </label>
+                        <!-- Reel -->
+                        <label v-if="auth == 1 || auth == 2 || auth == 3"
+                            :class="['flex items-center space-x-3 bg-[#3A3B3C] hover:bg-[#4E4F50] p-3 rounded-lg cursor-pointer transition-all', isReelSelected ? 'ring-2 ring-pink-400' : '']"
+                        >
+                            <i class="fas fa-film text-xs" style="color: #FF69B4;"></i> &nbsp;
+                            <span class="text-sm">Reel</span>
+                            <input
+                                type="file"
+                                ref="reel"
+                                accept="video/*"
+                                @change="handleFileChange('reel')"
+                                class="hidden"
+                            />
+                        </label>
+                    </div>
+                    <div
+                        v-if="showTagDropdown"
+                        class="mt-2 p-3 bg-[#3A3B3C] border border-gray-700 rounded-lg max-h-60 overflow-y-auto"
+                    >
+                        <label for="taggedUsers" class="block text-sm mb-1">Select Users</label>
+                        <select
+                            id="taggedUsers"
+                            v-model="taggedUsers"
+                            multiple
+                            class="w-full bg-[#242526] border border-gray-600 rounded p-2 text-white"
+                        >
+                            <option
+                                v-for="user in followList"
+                                :key="user.id"
+                                :value="user"
+                                class="text-black"
+                            >
+                                {{ user.name }}
+                            </option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                    </div>
+
+                    <!-- Multiple Photo Previews -->
+                    <div v-if="photoPreviews.length" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+                        <div
+                            v-for="(src, index) in photoPreviews"
+                            :key="index"
+                            class="w-full h-32 overflow-hidden rounded-lg shadow-md border border-gray-600 relative"
+                        >
+                            <img :src="src" alt="Preview" class="w-full h-full object-cover" />
+                            <button
+                                @click="removePhoto(index)"
+                                class="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                                title="Remove photo"
+                            >
+                                &times;
+                            </button>
                         </div>
+                    </div>
 
-                        <!-- File Inputs for Photo, Video, and Reel -->
-                        <div class="flex space-x-4">
-                            <label :class="{'cursor-pointer bg-gray-100': !isPhotoSelected}" class="flex flex-col items-center justify-center w-1/4 p-2 rounded-lg border border-blue-500 text-blue-600 hover:bg-blue-200">
-                                <span class="text-sm">Photo</span>
-                                <input type="file" ref="photo" accept="image/*" @change="handleFileChange('photo')" class="hidden" />
-                            </label>
+                    <!-- Video Preview -->
+                    <div v-if="videoPreview" class="w-full h-32 overflow-hidden rounded-lg shadow-md mt-4 relative">
+                        <video :src="videoPreview" controls class="w-full h-full object-cover"></video>
+                        <button
+                            @click="clearVideo"
+                            class="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                            title="Remove video"
+                        >
+                            &times;
+                        </button>
+                    </div>
 
-                            <label :class="{'cursor-pointer bg-gray-100': !isVideoSelected}" class="flex flex-col items-center justify-center w-1/4 p-2 rounded-lg border border-green-500 text-green-600 hover:bg-green-200">
-                                <span class="text-sm">Video</span>
-                                <input type="file" ref="video" accept="video/*" @change="handleFileChange('video')" class="hidden" />
-                            </label>
+                    <!-- Reel Preview -->
+                    <div v-if="reelPreview" class="w-full h-32 overflow-hidden rounded-lg shadow-md mt-4 relative">
+                        <video :src="reelPreview" controls class="w-full h-full object-cover"></video>
+                        <button
+                            @click="clearReel"
+                            class="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                            title="Remove reel"
+                        >
+                            &times;
+                        </button>
+                    </div>
 
-                            <label :class="{'cursor-pointer bg-gray-100': !isReelSelected}" class="flex flex-col items-center justify-center w-1/4 p-2 rounded-lg border border-pink-500 text-pink-600 hover:bg-pink-200">
-                                <span class="text-sm">Reel</span>
-                                <input type="file" ref="reel" accept="video/*" @change="handleFileChange('reel')" class="hidden" />
-                            </label>
-                        </div>
+                    <div v-if="uploading" class="w-full bg-gray-200 h-2 mb-4">
+                        <div :style="{ width: uploadProgress + '%' }" class="bg-blue-600 h-full"></div>
+                    </div>
 
-                        <!-- Preview Grid (with responsive columns) -->
-                        <div v-if="photoPreview || videoPreview || reelPreview" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-                            <div v-if="photoPreview" class="w-full h-32 overflow-hidden rounded-lg shadow-md">
-                                <img :src="photoPreview" alt="Photo Preview" class="w-full h-full object-cover" />
-                            </div>
-                            <div v-if="videoPreview" class="w-full h-32 overflow-hidden rounded-lg shadow-md">
-                                <video :src="videoPreview" controls class="w-full h-full object-cover"></video>
-                            </div>
-                            <div v-if="reelPreview" class="w-full h-32 overflow-hidden rounded-lg shadow-md">
-                                <video :src="reelPreview" controls class="w-full h-full object-cover"></video>
-                            </div>
-                        </div>
-
-                        <div v-if="uploading" class="w-full bg-gray-200 h-2 mb-4">
-                            <div :style="{ width: uploadProgress + '%' }" class="bg-blue-600 h-full"></div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex justify-between items-center mt-4">
-                            <button @click="clearAll" type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg shadow-sm text-sm font-medium">Clear All</button>
-                            <button @click="submitPost" type="button" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm text-sm font-medium transition-all">Post</button>
-                        </div>
+                    <!-- Action Buttons -->
+                    <div class="flex justify-between items-center mt-4">
+                        <button
+                            @click="clearAll"
+                            type="button"
+                            class="px-4 py-2 bg-white hover:bg-gray-500 text-black rounded-lg shadow-sm text-sm font-medium"
+                        >
+                            Clear All
+                        </button>
+                        <button
+                            @click="submitPost"
+                            type="button"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm text-sm font-medium transition-all"
+                        >
+                            Post
+                        </button>
                     </div>
                 </div>
 
-                <div v-for="post in followingPosts" :key="post.id" class="bg-white rounded-xl shadow-sm text-sm font-medium border1 dark:bg-dark2">
 
+                <!--- POST Area--->
+                <div
+                    v-for="post in followingPosts"
+                    :key="post.id"
+                    class="bg-white rounded-xl shadow-sm text-sm font-medium border1 dark:bg-dark2"
+                >
                     <!-- Post Header -->
                     <div class="flex gap-3 sm:p-4 p-2.5 text-sm font-medium">
-                        <img :src="post.vlogger.profile_picture ??  '/storage/noimage.jpg'" class="w-9 h-9 rounded-full" />
+                        <img
+                            :src="post.vlogger.profile_picture ?? '/storage/noimage.jpg'"
+                            class="w-9 h-9 rounded-full"
+                        />
                         <div class="flex-1">
                             <h4 class="text-black dark:text-white">{{ post.vlogger.name }}</h4>
-                            <div class="text-xs text-gray-500 dark:text-white/80">
-                                {{ new Date(post.created_at).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'long',
-                                    year: 'numeric'
-                                }) }}
-                            </div>
+                            <div
+                                class="text-xs text-gray-500 dark:text-white/80"
+                            >{{ new Date(post.created_at).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }) }}</div>
                         </div>
                     </div>
 
@@ -98,65 +212,181 @@
                         {{ post.caption }}
                     </div>
 
-                    <!-- Post Content -->
-                    <div class="relative w-full lg:h-72 h-full sm:px-4">
-                        <img v-if="post.content_type === 'photo'" :src="'/storage/' + post.content_file" @error="$event.target.src = '/storage/noimage.jpg'" class="sm:rounded-lg w-full h-full object-cover" />
-                        <video v-else-if="post.content_type === 'video'" controls class="sm:rounded-lg w-full h-full object-cover">
-                            <source :src="'/storage/' + post.content_file" type="video/mp4">
-                        </video>
-                        <video v-else-if="post.content_type === 'reel'" controls muted loop autoplay class="sm:rounded-lg w-full h-full object-cover">
-                            <source :src="'/storage/' + post.content_file" type="video/mp4">
-                        </video>
+                    <!-- Media Grid -->
+                    <div
+                        :class="[
+        'grid gap-4',
+        post.media.every((item) => item.media_type === 'photo') ? 'grid-cols-3' : '',
+      ]"
+                    >
+                        <div v-for="mediaItem in post.media" :key="mediaItem.id" class="overflow-hidden rounded-md">
+                            <img
+                                v-if="mediaItem.media_type === 'photo'"
+                                :src="`/storage/${mediaItem.file_path}`"
+                                alt="Photo"
+                                class="object-cover w-full h-full"
+                            />
+                            <video
+                                v-else-if="mediaItem.media_type === 'video'"
+                                controls
+                                class="object-cover w-full h-full"
+                            >
+                                <source :src="`/storage/${mediaItem.file_path}`" type="video/mp4" />
+                            </video>
+                            <video
+                                v-else-if="mediaItem.media_type === 'reel'"
+                                controls
+                                muted
+                                loop
+                                autoplay
+                                class="object-cover w-full h-full"
+                            >
+                                <source :src="`/storage/${mediaItem.file_path}`" type="video/mp4" />
+                            </video>
+                        </div>
                     </div>
 
+                    <!-- Post Footer (like, comment, flower toggle) -->
+                    <div
+                        class="sm:p-4 p-3 flex items-center gap-6 text-sm font-medium border-t border-gray-200 dark:border-gray-700"
+                    >
+                        <!-- Likes -->
+                        <div
+                            class="flex items-center gap-2 cursor-pointer group transition-colors duration-200"
+                        >
+                            <button
+                                class="button__ico text-blue-600 bg-blue-100 rounded-full p-2 group-hover:bg-blue-200 dark:bg-slate-700 dark:text-blue-400 dark:group-hover:bg-blue-800"
+                                aria-label="Like"
+                                title="Like"
+                            >
+                                <i class="fas fa-thumbs-up text-base"></i>
+                            </button>
+                            <span class="text-gray-700 dark:text-gray-300">0</span>
+                        </div>
 
-                    <!-- Post Footer (like, comment...) -->
-                    <div class="sm:p-4 p-2.5 flex items-center gap-4 text-xs font-semibold">
-                        <div class="flex items-center gap-2.5">
-                            <button class="button__ico text-red-500 bg-red-100 dark:bg-slate-700">
-                                <ion-icon class="text-lg" name="heart"></ion-icon>
+                        <!-- Views -->
+                        <div class="flex items-center gap-2 cursor-default">
+                            <button
+                                class="button__ico bg-gray-200 rounded-full p-2 text-gray-700 dark:bg-slate-700 dark:text-gray-400"
+                                aria-label="Views"
+                                title="Views"
+                                disabled
+                            >
+                                <i class="fas fa-eye text-base"></i>
                             </button>
-                            <span>0</span>
+                            <span class="text-gray-700 dark:text-gray-300">0</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <button class="button__ico bg-slate-200/70 dark:bg-slate-700">
-                                <ion-icon class="text-lg" name="chatbubble-ellipses"></ion-icon>
-                            </button>
-                            <span>0</span>
-                        </div>
-                        <button class="button__ico ml-auto">
-                            <ion-icon class="text-xl" name="paper-plane-outline"></ion-icon>
+
+                        <!-- Toggle Comments -->
+                        <button
+                            @click="toggleComments(post.id)"
+                            :class="[
+          'ml-auto font-semibold transition-colors duration-200 px-3 py-1 rounded',
+          openComments[post.id]
+            ? 'bg-blue-600 text-white dark:bg-blue-500'
+            : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500',
+        ]"
+                        >
+                            Comments
                         </button>
-                        <button class="button__ico">
-                            <ion-icon class="text-xl" name="share-outline"></ion-icon>
+
+                        <!-- Toggle Gifts -->
+                        <button
+                            @click="toggleGifts(post.id)"
+                            :class="[
+          'font-semibold transition-colors duration-200 px-3 py-1 rounded',
+          openGifts[post.id]
+            ? 'bg-pink-600 text-white dark:bg-pink-500'
+            : 'text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-500',
+        ]"
+                        >
+                            Send Gift
                         </button>
                     </div>
 
-                    <hr>
+                    <hr />
 
-                    <!-- Comments Section -->
-                    <div class="px-4 py-2 space-y-4">
-                        <div  class="flex gap-3">
-                            <img :src="'/storage/noimage.jpg'" class="w-8 h-8 rounded-full" />
+                    <!-- Comments Box -->
+                    <div v-if="openComments[post.id]" class="px-4 py-3 space-y-6 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+                        <!-- Single Comment (Static Example) -->
+                        <div class="flex gap-3">
+                            <img
+                                :src="'/storage/noimage.jpg'"
+                                alt="User Avatar"
+                                class="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+                            />
                             <div class="flex-1">
-                                <div class="font-semibold text-sm">usr</div>
-                                <div class="text-sm text-gray-700 dark:text-white/80">Khub valo hoice</div>
-                                <div class="text-xs text-gray-500 dark:text-white/80">12 may 2025</div>
+                                <div
+                                    class="font-semibold text-sm text-gray-900 dark:text-white"
+                                >
+                                    usr
+                                </div>
+                                <div
+                                    class="text-sm text-gray-700 dark:text-gray-300 mt-0.5"
+                                >
+                                    Khub valo hoice
+                                </div>
+                                <div
+                                    class="text-xs text-gray-400 dark:text-gray-500 mt-1"
+                                >
+                                    12 May 2025
+                                </div>
                             </div>
                         </div>
 
-
                         <!-- Add Comment Input -->
-                        <div class="mt-4">
+                        <div>
                             <input
-                                v-model="newComment"
+                                v-model="newComment[post.id]"
                                 type="text"
                                 placeholder="Add a comment..."
-                                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-gray-600 dark:text-white"
                             />
-                            <button   class="w-full mt-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <button
+                                @click="postComment(post.id)"
+                                class="w-full mt-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                :disabled="!newComment[post.id] || newComment[post.id].trim() === ''"
+                            >
                                 Post Comment
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Gift Box -->
+                    <div
+                        v-if="openGifts[post.id]"
+                        class="px-4 py-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm mt-4"
+                    >
+                        <div class="flex items-center gap-2 select-none mb-3">
+                            <template v-for="flowerIndex in 5" :key="flowerIndex">
+                                <button
+                                    @click="sendGifts(post.id, flowerIndex)"
+                                    @mouseover="hoverRatings[post.id] = flowerIndex"
+                                    @mouseleave="hoverRatings[post.id] = 0"
+                                    :class="[
+              'text-4xl transition-colors duration-200',
+              (hoverRatings[post.id] >= flowerIndex || flowerRatings[post.id] >= flowerIndex)
+                ? 'text-pink-500'
+                : 'text-gray-300 dark:text-gray-600',
+            ]"
+                                    aria-label="Send Gift"
+                                    type="button"
+                                >
+                                    🌸
+                                </button>
+                            </template>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button
+                                @click="increaseGifts(post.id)"
+                                class="py-2 px-4 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
+                            >
+                                Add More Gifts
+                            </button>
+                            <span class="text-gray-700 dark:text-gray-400">
+                             Total Gifts Sent: {{ flowerRatings[post.id] || 0 }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -200,7 +430,7 @@
                         <div class="flex justify-between text-black dark:text-white">
                             <h3 class="font-bold text-base">People You Might Know</h3>
                             <button type="button" @click="fetchSuggestedUsers">
-                                <ion-icon name="sync-outline" class="text-xl"></ion-icon>
+                                <ion-icon name="sync-outline" class="text-xs"></ion-icon>
                             </button>
                         </div>
 
@@ -243,23 +473,27 @@
 @section('js')
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/laravel-echo/dist/echo.iife.js"></script>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script>
         const { createApp } = Vue;
 
         createApp({
             data() {
                 return {
-                    suggestedUsers: [] ,
+                    auth: {{\Auth::guard('vlogger')->user()->level}},
+                    suggestedUsers: [],
                     followingPosts: [],
                     followList: [],
                     taggedUsers: [],
+                    showTagDropdown: false,
                     caption: "",
-                    photo: null,
+                    photoFiles: [],
+                    photoPreviews: [],
                     video: null,
                     reel: null,
-                    photoPreview: null,
                     videoPreview: null,
                     reelPreview: null,
                     isPhotoSelected: false,
@@ -267,32 +501,29 @@
                     isReelSelected: false,
                     uploading: false,
                     uploadProgress: 0,
-                }
+                    newComment: {},
+                    openComments: {},
+                    openGifts: {},
+                    flowerRatings: {},
+                    hoverRatings: {},
+                };
             },
             methods: {
-                // Fetch suggested users from the API
                 async fetchSuggestedUsers() {
                     try {
                         const response = await axios.get('/suggested-users');
                         this.suggestedUsers = response.data;
-
-                        console.log('user',response.data)
                     } catch (error) {
                         console.error('Error fetching suggested users:', error);
                     }
                 },
-
-                // Follow a suggested user
                 async followUser(userId) {
                     const user = this.suggestedUsers.find(u => u.id === userId);
                     if (!user) return;
-
                     try {
                         if (!user.followed) {
                             await axios.post(`/follow/${userId}`);
                             user.followed = true;
-
-                            // Play follow sound
                             this.$refs.followSound.play();
                         } else {
                             await axios.post(`/unfollow/${userId}`);
@@ -303,104 +534,103 @@
                         console.error('Error following/unfollowing user:', error);
                     }
                 },
-
                 async fetchFollowingPosts() {
                     try {
                         const response = await axios.get('/followings/posts');
                         this.followingPosts = response.data;
-                        console.log('Posts from followed users:', response.data);
                     } catch (error) {
                         console.error('Error fetching following posts:', error);
                     }
                 },
-
                 async fetchFollowList() {
                     try {
                         const response = await axios.get('/my-following');
-                        this.followList = response.data; // Array of users
+                        this.followList = response.data;
                     } catch (error) {
                         console.error('Error fetching follow list:', error);
                     }
                 },
-
                 handleFileChange(type) {
                     const fileInput = this.$refs[type];
-                    const file = fileInput.files[0];
+                    const files = Array.from(fileInput.files);
 
-                    // If a file is selected, handle it
-                    if (file) {
-                        // Clear other inputs and previews
-                        this.clearOtherInputs(type);
+                    // Clear other inputs
+                    this.clearOtherInputs(type);
 
-                        // Handle the selected file type
-                        if (type === 'photo') {
-                            this.photo = file;
-                            this.photoPreview = URL.createObjectURL(file);
-                            this.isPhotoSelected = true;
-                        } else if (type === 'video') {
-                            this.video = file;
-                            this.videoPreview = URL.createObjectURL(file);
-                            this.isVideoSelected = true;
-                        } else if (type === 'reel') {
-                            this.reel = file;
-                            this.reelPreview = URL.createObjectURL(file);
-                            this.isReelSelected = true;
-                        }
+                    if (type === 'photo') {
+                        this.photoFiles = files;
+                        this.photoPreviews = files.map(file => URL.createObjectURL(file));
+                        this.isPhotoSelected = true;
+                    } else if (type === 'video') {
+                        this.video = files[0];
+                        this.videoPreview = URL.createObjectURL(files[0]);
+                        this.isVideoSelected = true;
+                    } else if (type === 'reel') {
+                        this.reel = files[0];
+                        this.reelPreview = URL.createObjectURL(files[0]);
+                        this.isReelSelected = true;
                     }
                 },
-
                 clearOtherInputs(selectedType) {
                     const types = ['photo', 'video', 'reel'];
                     types.forEach((type) => {
                         if (type !== selectedType) {
-                            // Clear file input and reset selection state
-                            this.$refs[type].value = '';
+                            // Check if ref exists before resetting value
+                            if (this.$refs[type]) {
+                                this.$refs[type].value = '';
+                            }
                             this[`is${type.charAt(0).toUpperCase() + type.slice(1)}Selected`] = false;
-                            this[`${type}Preview`] = null; // Reset the preview
+                            this[`${type}Preview`] = null;
+                            if (type === 'photo') {
+                                this.photoFiles = [];
+                                this.photoPreviews = [];
+                            } else {
+                                this[type] = null;
+                            }
                         }
                     });
                 },
-
                 clearAll() {
                     this.caption = '';
-                    this.photo = null;
+                    this.taggedUsers = [];
+                    this.photoFiles = [];
+                    this.photoPreviews = [];
                     this.video = null;
-                    this.reel = null;
-                    this.photoPreview = null;
                     this.videoPreview = null;
+                    this.reel = null;
                     this.reelPreview = null;
                     this.isPhotoSelected = false;
                     this.isVideoSelected = false;
                     this.isReelSelected = false;
+                    this.uploading = false;
+                    this.uploadProgress = 0;
                     this.$refs.photo.value = '';
                     this.$refs.video.value = '';
                     this.$refs.reel.value = '';
                 },
-
                 submitPost() {
                     const formData = new FormData();
                     formData.append('caption', this.caption);
 
-                    // Determine selected type and file
-                    if (this.photo) {
+                    if (this.photoFiles.length > 0) {
                         formData.append('content_type', 'photo');
-                        formData.append('content_file', this.photo);
+                        this.photoFiles.forEach((file, index) => {
+                            formData.append(`content_files[${index}]`, file);
+                        });
                     } else if (this.video) {
                         formData.append('content_type', 'video');
-                        formData.append('content_file', this.video);
+                        formData.append('content_files[0]', this.video);
                     } else if (this.reel) {
                         formData.append('content_type', 'reel');
-                        formData.append('content_file', this.reel);
+                        formData.append('content_files[0]', this.reel);
                     }
 
-                    // Show progress bar
+                    this.taggedUsers.forEach(user => {
+                        formData.append('tagged_users[]', user.id);
+                    });
+
                     this.uploading = true;
                     this.uploadProgress = 0;
-
-                    // Append tagged user IDs
-                    this.taggedUsers.forEach(userId => {
-                        formData.append('tagged_users[]', userId);
-                    });
 
                     axios.post('/posts', formData, {
                         onUploadProgress: (progressEvent) => {
@@ -411,42 +641,53 @@
                     })
                         .then(response => {
                             alert('Post created successfully!');
-                            this.clearAll(); // Reset the form
-                            this.taggedUsers = [];
-                            this.uploading = false;  // Hide the progress bar
+                            this.clearAll();
                         })
                         .catch(error => {
                             alert('An error occurred while creating the post.');
                             console.error(error);
-                            this.uploading = false;  // Hide the progress bar
+                        })
+                        .finally(() => {
+                            this.uploading = false;
                         });
-                }
+                },
+
+
+                toggleComments(postId) {
+                    this.openComments = { ...this.openComments, [postId]: !this.openComments[postId] };
+                    if (this.openGifts[postId]) {
+                        this.openGifts = { ...this.openGifts, [postId]: false };
+                    }
+                },
+                toggleGifts(postId) {
+                    this.openGifts = { ...this.openGifts, [postId]: !this.openGifts[postId] };
+                    if (this.openComments[postId]) {
+                        this.openComments = { ...this.openComments, [postId]: false };
+                    }
+                },
+                postComment(postId) {
+                    const comment = this.newComment[postId];
+                    if (!comment || comment.trim() === '') return;
+                    alert(`Comment on post ${postId}: ${comment}`);
+                    this.newComment = { ...this.newComment, [postId]: '' };
+                },
+                sendGifts(postId, value) {
+                    this.flowerRatings = { ...this.flowerRatings, [postId]: value };
+                },
+                increaseGifts(postId) {
+                    if (!this.flowerRatings[postId]) {
+                        this.flowerRatings[postId] = 1;
+                    } else {
+                        this.flowerRatings[postId] += 1;
+                    }
+                },
+
             },
             mounted() {
                 this.fetchSuggestedUsers();
                 this.fetchFollowingPosts();
                 this.fetchFollowList();
-
-                Echo.private(`vlogger.${this.userId}`)
-                    .notification((notification) => {
-                        console.log("🔔 New notification received:", notification);
-                        // You can show a toast or update a badge counter here
-                    });
-
             }
         }).mount('#app');
     </script>
-
-    <script>
-        window.Pusher = Pusher;
-
-        window.Echo = new Echo({
-            broadcaster: 'pusher',
-            key: '{{ env('PUSHER_APP_KEY') }}',
-            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
-            forceTLS: true
-        });
-    </script>
-
-
 @endsection
