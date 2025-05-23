@@ -30,6 +30,10 @@ Route::middleware('vlogger')->group(function () {
 
     Route::post('/posts/{post}/comments', [\App\Http\Controllers\frontend\PostInteractionController::class, 'addComment']);
     Route::post('/posts/{post}/gifts', [\App\Http\Controllers\frontend\PostInteractionController::class, 'sendGift']);
+
+    Route::get('gift-purchases', [\App\Http\Controllers\frontend\PostInteractionController::class, 'getAllPurchases']);
+    Route::post('/posts/{post}/like', [\App\Http\Controllers\frontend\PostInteractionController::class, 'toggleLike']);
+
 });
 
 

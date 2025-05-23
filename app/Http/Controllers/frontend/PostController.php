@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\PostMedia;
 use App\Models\TaggedUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Vlogger;
 use App\Notifications\TaggedInPostNotification;
@@ -95,11 +96,22 @@ class PostController extends Controller
 
         $followingIds = $authUser->followings()->pluck('vloggers.id');
 
-        // Get posts with their author and media files
-        $posts = Post::with(['vlogger', 'media','comments','comments.vlogger'])
+        // Get post IDs liked by the auth user
+        $likedPostIds = DB::table('likes')
+            ->where('user_id', $authUser->id)
+            ->pluck('post_id')
+            ->toArray();
+
+        // Get posts with author, media, comments, and like count
+        $posts = Post::with(['vlogger', 'media', 'comments', 'comments.vlogger'])
             ->whereIn('vlogger_id', $followingIds)
+            ->withCount('likes') // adds likes_count
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($post) use ($likedPostIds) {
+                $post->liked_by_auth_user = in_array($post->id, $likedPostIds);
+                return $post;
+            });
 
         return response()->json($posts);
     }

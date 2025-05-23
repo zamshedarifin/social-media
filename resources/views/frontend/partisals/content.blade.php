@@ -247,29 +247,24 @@
                         <!-- Likes -->
                         <div
                             class="flex items-center gap-2 cursor-pointer group transition-colors duration-200"
+                            @click="toggleLike(post.id)"
                         >
                             <button
-                                class="button__ico text-blue-600 bg-blue-100 rounded-full p-2 group-hover:bg-blue-200 dark:bg-slate-700 dark:text-blue-400 dark:group-hover:bg-blue-800"
+                                class="button__ico"
+                                :class="[post.liked_by_auth_user ? 'text-red-600 bg-red-100 dark:bg-red-700 dark:text-red-300 dark:group-hover:bg-red-800'
+                                                : 'text-blue-600 bg-blue-100 dark:bg-slate-700 dark:text-blue-400 dark:group-hover:bg-blue-800',  'rounded-full p-2 group-hover:bg-opacity-70 transition'
+                                        ]"
                                 aria-label="Like"
-                                title="Like"
+                                :title="post.liked_by_auth_user ? 'Unlike' : 'Like'"
                             >
-                                <i class="fas fa-thumbs-up text-base"></i>
+                                <i
+                                    class="fas fa-thumbs-up text-base"
+                                    :class="{ 'text-red-500': post.liked_by_auth_user }"
+                                ></i>
                             </button>
-                            <span class="text-gray-700 dark:text-gray-300">0</span>
+                            <span class="text-gray-700 dark:text-gray-300">{{ post.likes_count }}</span>
                         </div>
 
-                        <!-- Views -->
-                        <div class="flex items-center gap-2 cursor-default">
-                            <button
-                                class="button__ico bg-gray-200 rounded-full p-2 text-gray-700 dark:bg-slate-700 dark:text-gray-400"
-                                aria-label="Views"
-                                title="Views"
-                                disabled
-                            >
-                                <i class="fas fa-eye text-base"></i>
-                            </button>
-                            <span class="text-gray-700 dark:text-gray-300">0</span>
-                        </div>
 
                         <!-- Toggle Comments -->
                         <button
@@ -301,9 +296,9 @@
 
                     <!-- Comments Box -->
                     <div v-if="openComments[post.id]" class="px-4 py-3 space-y-6 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
-                        <!-- Single Comment (Static Example) -->
-                        <div class="flex gap-3" v-for="postComment in post.comments" :key="postComment.id">
 
+                        <!-- Render Comments -->
+                        <div class="flex gap-3" v-for="postComment in post.comments" :key="postComment.id">
                             <img
                                 :src="'/storage/noimage.jpg'"
                                 alt="User Avatar"
@@ -318,14 +313,13 @@
                                 </div>
                                 <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                     {{ new Date(postComment?.created_at).toLocaleDateString('en-GB', {
-                                        day: '2-digit',
-                                        month: 'long',
-                                        year: 'numeric'
-                                      }) }}
+                                      day: '2-digit',
+                                      month: 'long',
+                                      year: 'numeric'
+                                    }) }}
                                 </div>
                             </div>
                         </div>
-
 
                         <!-- Add Comment Input -->
                         <div>
@@ -346,41 +340,42 @@
                     </div>
 
                     <!-- Gift Box -->
-                    <div
-                        v-if="openGifts[post.id]"
-                        class="px-4 py-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm mt-4"
-                    >
-                        <div class="flex items-center gap-2 select-none mb-3">
-                            <template v-for="flowerIndex in 5" :key="flowerIndex">
-                                <button
-                                    @click="sendGifts(post.id, flowerIndex)"
-                                    @mouseover="hoverRatings[post.id] = flowerIndex"
-                                    @mouseleave="hoverRatings[post.id] = 0"
-                                    :class="[
-              'text-4xl transition-colors duration-200',
-              (hoverRatings[post.id] >= flowerIndex || flowerRatings[post.id] >= flowerIndex)
-                ? 'text-pink-500'
-                : 'text-gray-300 dark:text-gray-600',
-            ]"
-                                    aria-label="Send Gift"
-                                    type="button"
+                    <div v-if="openGifts[post.id]" class="px-2 py-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+                            <h4 class="font-semibold text-lg text-gray-800 dark:text-gray-200">Send a Gift</h4>
+                            <div v-if="Array.isArray(giftPurchases) && giftPurchases.length" class="flex space-x-6 overflow-x-auto py-2">
+                                <div
+                                    v-for="(gift, index) in giftPurchases"
+                                    :key="gift.id"
+                                    class="relative flex-shrink-0 w-14 h-14" style="margin-left: 6px"
                                 >
-                                    🌸
-                                </button>
-                            </template>
-                        </div>
+                                    <!-- Gift Icon -->
+                                    <img
+                                        :src="`/${gift.gift_catalog.icon}`"
+                                        alt="Gift Icon"
+                                        class="w-14 h-14 object-cover cursor-pointer border border-gray-300 dark:border-gray-700 hover:scale-110 transition-transform duration-200"
+                                        @click="increaseQuantity(post.id, gift.gift_catalog.id, gift.total_quantity)"
+                                        title="Click to add quantity"
+                                    />
 
-                        <div class="flex items-center gap-3">
-                            <button
-                                @click="increaseGifts(post.id)"
-                                class="py-2 px-4 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
-                            >
-                                Add More Gifts
-                            </button>
-                            <span class="text-gray-700 dark:text-gray-400">
-                             Total Gifts Sent: {{ flowerRatings[post.id] || 0 }}
-                            </span>
-                        </div>
+                                    <!-- Quantity Badge -->
+                                    <span
+                                        v-if="sendQuantities[post.id + '_' + gift.gift_catalog.id] > 0"
+                                        class="absolute mt-2 top-0 right-0 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg select-none"
+                                    >
+      {{ sendQuantities[post.id + '_' + gift.gift_catalog.id] }}
+    </span>
+
+                                    <!-- Send Button -->
+                                    <button
+                                        v-if="sendQuantities[post.id + '_' + gift.gift_catalog.id] > 0"
+                                        class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded shadow hover:bg-blue-700 transition-colors whitespace-nowrap mt-2"
+                                        @click="sendGift(post.id, gift.gift_catalog.id)"
+                                    >
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                            <p v-else class="text-gray-500 dark:text-gray-400">No gifts purchased yet.</p>
                     </div>
                 </div>
 
@@ -413,7 +408,7 @@
                 </div>
             </div>
             <!-- right sidebar -->
-            <div class="lg:max-w-[370px] md:max-w-[510px] mx-auto">
+            <div class="lg:max-w-[370px] md:max-w-[510px] mx-auto max-xl:hidden">
 
                 <div class="xl:space-y-6 space-y-3 md:pb-12"  uk-sticky="end: #js-oversized; offset: 50; media:992">
 
@@ -466,17 +461,19 @@
 @section('js')
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+
     <script>
         const { createApp } = Vue;
 
         createApp({
             data() {
                 return {
-                    auth: {{\Auth::guard('vlogger')->user()->level}},
+                    auth: {{ \Auth::guard('vlogger')->user()->level }},
                     suggestedUsers: [],
                     followingPosts: [],
                     followList: [],
@@ -497,11 +494,15 @@
                     newComment: {},
                     openComments: {},
                     openGifts: {},
-                    flowerRatings: {},
-                    hoverRatings: {},
+                    giftPurchases: [],
+                    sendQuantities: {},
                 };
             },
             methods: {
+                showAlert(icon, title, text) {
+                    Swal.fire({ icon, title, text });
+                },
+
                 async fetchSuggestedUsers() {
                     try {
                         const response = await axios.get('/suggested-users');
@@ -546,8 +547,6 @@
                 handleFileChange(type) {
                     const fileInput = this.$refs[type];
                     const files = Array.from(fileInput.files);
-
-                    // Clear other inputs
                     this.clearOtherInputs(type);
 
                     if (type === 'photo') {
@@ -568,7 +567,6 @@
                     const types = ['photo', 'video', 'reel'];
                     types.forEach((type) => {
                         if (type !== selectedType) {
-                            // Check if ref exists before resetting value
                             if (this.$refs[type]) {
                                 this.$refs[type].value = '';
                             }
@@ -633,29 +631,38 @@
                         }
                     })
                         .then(response => {
-                            alert('Post created successfully!');
+                            this.showAlert('success', 'Post Created', 'Your post was successfully uploaded!');
                             this.clearAll();
                         })
                         .catch(error => {
-                            alert('An error occurred while creating the post.');
+                            this.showAlert('error', 'Upload Failed', 'An error occurred while creating the post.');
                             console.error(error);
                         })
                         .finally(() => {
                             this.uploading = false;
                         });
                 },
-
-
                 toggleComments(postId) {
                     this.openComments = { ...this.openComments, [postId]: !this.openComments[postId] };
                     if (this.openGifts[postId]) {
                         this.openGifts = { ...this.openGifts, [postId]: false };
                     }
                 },
-                toggleGifts(postId) {
+                async toggleGifts(postId) {
                     this.openGifts = { ...this.openGifts, [postId]: !this.openGifts[postId] };
+
                     if (this.openComments[postId]) {
                         this.openComments = { ...this.openComments, [postId]: false };
+                    }
+
+                    if (this.openGifts[postId]) {
+                        try {
+                            const response = await axios.get('/gift-purchases');
+                            this.giftPurchases = response.data;
+                        } catch (error) {
+                            console.error('Failed to load gift purchases', error);
+                            this.giftPurchases = [];
+                        }
                     }
                 },
                 async postComment(postId) {
@@ -666,26 +673,65 @@
                         const response = await axios.post(`/posts/${postId}/comments`, {
                             comment: comment.trim(),
                         });
-                        // Optionally push to local comments list or refetch
-                        if (!this.comments[postId]) this.$set(this.comments, postId, []);
-                        this.comments[postId].push(response.data.comment);
-                        this.newComment = { ...this.newComment, [postId]: '' };
+
+                        const post = this.followingPosts.find(p => p.id === postId);
+                        if (post) {
+                            if (!post.comments) this.$set(post, 'comments', []);
+                            post.comments.push(response.data.comment);
+                        }
+
+                        this.newComment[postId] = '';
+                        this.newComment = { ...this.newComment };
+
                     } catch (error) {
                         console.error('Failed to post comment:', error);
-                        alert('Failed to post comment. Please try again.');
                     }
                 },
-                sendGifts(postId, value) {
-                    this.flowerRatings = { ...this.flowerRatings, [postId]: value };
-                },
-                increaseGifts(postId) {
-                    if (!this.flowerRatings[postId]) {
-                        this.flowerRatings[postId] = 1;
-                    } else {
-                        this.flowerRatings[postId] += 1;
-                    }
-                },
+                increaseQuantity(postId, giftId, maxQuantity) {
+                    const key = postId + '_' + giftId;
+                    const currentQty = this.sendQuantities[key] || 0;
 
+                    if (currentQty < maxQuantity) {
+                        this.sendQuantities[key] = currentQty + 1;
+                    }
+                },
+                async sendGift(postId, giftCatalogId) {
+                    const key = `${postId}_${giftCatalogId}`;
+                    const quantity = this.sendQuantities[key];
+
+                    if (!quantity || quantity < 1) {
+                        this.showAlert('warning', 'Invalid Quantity', 'Please enter a valid quantity before sending.');
+                        return;
+                    }
+
+                    try {
+                        await axios.post(`/posts/${postId}/gifts`, {
+                            gift_catalog_id: giftCatalogId,
+                            quantity: quantity,
+                        });
+
+                        this.showAlert('success', 'Gift Sent!', 'Your gift has been sent successfully.');
+                        this.sendQuantities[key] = '';
+                    } catch (error) {
+                        console.error('Failed to send gift:', error);
+                        this.showAlert('error', 'Failed to Send Gift', 'Something went wrong while sending the gift.');
+                    }
+                },
+                async toggleLike(postId) {
+                    const post = this.followingPosts.find(p => p.id === postId);
+                    if (!post) return;
+
+                    try {
+                        const response = await axios.post(`/posts/${postId}/like`);
+
+                        post.liked_by_auth_user = response.data.liked;
+                        post.likes_count = response.data.likes_count;
+
+                    } catch (error) {
+                        console.error('Error toggling like:', error);
+                        this.showToast('error', 'Could not update like status.', 'Error');
+                    }
+                }
             },
             mounted() {
                 this.fetchSuggestedUsers();

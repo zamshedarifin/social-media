@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('gifts', function (Blueprint $table) {
             $table->id();
+            $table->tinyInteger('gift_catalog_id')->nullable();
             $table->foreignId('post_id')->constrained('posts')->onDelete('cascade');
             $table->foreignId('vlogger_id')->constrained('vloggers')->onDelete('cascade'); // user who sent gift
             $table->tinyInteger('quantity')->default(1); // number of gifts sent

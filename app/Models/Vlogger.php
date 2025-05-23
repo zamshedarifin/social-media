@@ -41,4 +41,14 @@ class Vlogger extends Authenticatable
         return $this->belongsToMany(Post::class, 'tagged_users', 'user_id', 'post_id')
             ->withPivot('status');
     }
+
+    public function giftsSent()
+    {
+        return $this->hasMany(Gift::class, 'vlogger_id'); // gifts sent by vlogger
+    }
+
+    public function giftPurchases()
+    {
+        return $this->hasMany(VloggerGiftPurchase::class);
+    }
 }
